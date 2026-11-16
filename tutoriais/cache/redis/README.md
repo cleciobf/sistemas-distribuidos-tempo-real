@@ -157,6 +157,10 @@ sentinel2        sentinel2        Up 10 seconds (healthy)
 sentinel3        sentinel3        Up 10 seconds (healthy)
 ```
 
+Print do teste em Docker Desktop (macOS):
+
+![Ambiente saudável: docker compose up e ps com os 6 contêineres](imagens/01-ambiente-saudavel.png)
+
 > **Para facilitar os próximos comandos**, defina um atalho no terminal com a senha do `.env`:
 > ```bash
 > export REDISCLI_AUTH=sdtr-lab-2026
@@ -324,6 +328,8 @@ Resultado obtido no teste (10/11/2026, Docker Desktop no macOS):
 
 A réplica promovida pode ser `redis-replica1` ou `redis-replica2`: o Sentinel escolhe a que estiver mais atualizada, e no empate a escolha varia a cada execução.
 
+![Failover: contador com 6 s de erro e redis-replica1 assumindo como primário](imagens/02-failover-contador.png)
+
 O que aconteceu, segundo os logs dos Sentinels (`docker compose logs sentinel1 sentinel2 sentinel3`):
 
 ```
@@ -356,6 +362,8 @@ t=12s  papel do antigo primário: slave     ← o Sentinel o rebaixou a réplica
 ```
 
 Log do Sentinel: `+convert-to-slave slave redis-primario:6379 ... @ mymaster <novo primário> 6379`.
+
+![Antigo primário volta como master, é rebaixado a slave e a limpeza remove tudo](imagens/03-rebaixamento-e-limpeza.png)
 
 **Este é o ponto mais interessante para a turma.** Por cerca de 10 segundos existiram **dois nós se dizendo primário**, situação conhecida como *split-brain*. Um cliente que escrevesse direto no `redis-primario` (porta 6380), sem perguntar ao Sentinel, gravaria num nó desatualizado, e essa escrita seria **apagada** quando ele virasse réplica. Por isso a aplicação deve sempre descobrir o primário pelo Sentinel.
 
